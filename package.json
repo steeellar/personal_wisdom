@@ -1,0 +1,71 @@
+{
+  "name": "pdf-reader",
+  "version": "1.0.0",
+  "description": "基于 Electron 的跨平台 PDF 阅读器，支持 AI 智能问答功能",
+  "main": "main.js",
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dev": "node scripts/dev.js",
+    "setup": "node scripts/setup.js",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:all": "electron-builder -mw"
+  },
+  "devDependencies": {
+    "electron": "^39.8.0",
+    "electron-builder": "^24.6.4"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^5.6.205"
+  },
+  "build": {
+    "appId": "com.pdfreader.app",
+    "productName": "PDF 智能阅读器",
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "**/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/*.d.ts",
+      "!**/node_modules/.bin",
+      "!{.eslintrc,.eslintignore,.eslintrc.js,.eslintrc.json}",
+      "!**/.DS_Store",
+      "!**/.git/**",
+      "!**/.vscode/**",
+      "!**/.idea/**"
+    ],
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.productivity",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "assets/entitlements.mac.plist",
+      "entitlementsInherit": "assets/entitlements.mac.plist"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "assets/icon.ico",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "publish": null
+  }
+}

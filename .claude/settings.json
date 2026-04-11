@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read(//private/tmp/claude-501/-Users-yushijie/project/PDFReader/27618142-1055-4a65-a037-ef22b10c7c32/tasks/**)",
+      "Read(//private/tmp/claude-501/-Users-yushijie/project-PDFReader/27618142-1055-4a65-a037-ef22b10c7c32/tasks/**)",
+      "Read",
+      "Write",
+      "Edit",
+      "Delete",
+      "Create"
+    ],
+    "additionalDirectories": [
+      "/Users/yushijie/project",
+      "/Users/yushijie/project/PDFReader/node_modules/electron"
+    ]
+  }
+}
