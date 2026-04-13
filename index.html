@@ -1085,8 +1085,9 @@ ${indexSummary}
 
                     console.log('AI 检索结果:', result);
 
-                    // 解析结果
-                    if (result.trim() === '无') {
+                    // 解析结果 - 支持多种"无"的表达方式
+                    const trimmedResult = result.trim().toLowerCase();
+                    if (trimmedResult === '无' || trimmedResult === 'none' || trimmedResult === '没有' || trimmedResult === '不相关' || trimmedResult === '未找到') {
                         return [];
                     }
 
@@ -1748,8 +1749,14 @@ ${indexSummary}
                     // 使用索引进行智能检索
                     const relevantDocs = await findRelevantDocuments(question);
 
+                    // 构建索引摘要（作为备用上下文）
+                    const indexSummary = knowledgeIndex.map((doc, index) => {
+                        return `[${index + 1}] ${doc.name}\n摘要: ${doc.summary}`;
+                    }).join('\n\n');
+
                     if (relevantDocs.length === 0) {
-                        systemPrompt = `知识库中没有找到与问题相关的文档。知识库包含 ${knowledgeFiles.length} 个文档，请询问与这些文档内容相关的问题。`;
+                        // 检索结果为空，使用索引摘要作为上下文
+                        systemPrompt = `你是一个专业的知识库助手。虽然未找到高度相关的具体文档，但知识库中包含以下文档的摘要信息：\n\n【知识库索引】\n${indexSummary}\n\n【说明】\n1. 请基于上述摘要信息尽力回答用户问题\n2. 如果问题需要详细内容，告知用户需要加载具体文档\n3. 如果问题是全局性问题（如总结全文），尝试基于摘要提供概览\n4. 如果问题确实无法基于现有信息回答，请礼貌地告知用户`;
                     } else {
                         showToast(`已检索到 ${relevantDocs.length} 个相关文档`, 'info');
 
