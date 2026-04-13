@@ -82,6 +82,27 @@ ipcMain.handle('select-folder', async () => {
   return null;
 });
 
+ipcMain.handle('load-folder', async (_, folderPath) => {
+  try {
+    if (!folderPath) {
+      return { success: false, error: '缺少文件夹路径' };
+    }
+
+    if (!fs.existsSync(folderPath)) {
+      return { success: false, error: '文件夹不存在' };
+    }
+
+    const folderStructure = await scanFolder(folderPath);
+    return {
+      success: true,
+      structure: folderStructure,
+      folderPath: folderPath
+    };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
 // 递归扫描文件夹
 async function scanFolder(folderPath) {
   const items = [];
@@ -155,13 +176,20 @@ ipcMain.handle('read-file', async (_, filePath) => {
   }
 });
 
+// 保存单个配置项（保留兼容性，但不推荐使用）
 ipcMain.handle('save-api-key', async (_, service, apiKey) => {
   const configPath = path.join(app.getPath('userData'), 'config.json');
   let config = {};
 
   try {
     if (fs.existsSync(configPath)) {
-      config = JSON.parse(await fs.promises.readFile(configPath, 'utf8'));
+      const content = await fs.promises.readFile(configPath, 'utf8');
+      try {
+        config = JSON.parse(content);
+      } catch (parseError) {
+        console.warn('配置文件 JSON 解析失败，将使用新配置:', parseError.message);
+        config = {};
+      }
     }
   } catch (e) {
     console.error('读取配置失败:', e);
@@ -170,9 +198,44 @@ ipcMain.handle('save-api-key', async (_, service, apiKey) => {
   config[service] = apiKey;
 
   try {
-    await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
+    if (typeof config[service] !== 'string') {
+      config[service] = String(config[service]);
+    }
+    await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2), 'utf8');
     return { success: true };
   } catch (e) {
+    console.error('保存配置失败:', e);
+    return { success: false, error: e.message };
+  }
+});
+
+// 批量保存配置（推荐使用，避免并发写入）
+ipcMain.handle('save-config', async (_, configData) => {
+  const configPath = path.join(app.getPath('userData'), 'config.json');
+  let config = {};
+
+  try {
+    if (fs.existsSync(configPath)) {
+      const content = await fs.promises.readFile(configPath, 'utf8');
+      try {
+        config = JSON.parse(content);
+      } catch (parseError) {
+        console.warn('配置文件 JSON 解析失败，将使用新配置:', parseError.message);
+        config = {};
+      }
+    }
+  } catch (e) {
+    console.error('读取配置失败:', e);
+  }
+
+  // 合并新配置
+  Object.assign(config, configData);
+
+  try {
+    await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2), 'utf8');
+    return { success: true };
+  } catch (e) {
+    console.error('保存配置失败:', e);
     return { success: false, error: e.message };
   }
 });
@@ -182,8 +245,16 @@ ipcMain.handle('load-api-key', async (_, service) => {
 
   try {
     if (fs.existsSync(configPath)) {
-      const config = JSON.parse(await fs.promises.readFile(configPath, 'utf8'));
-      return config[service] || '';
+      const content = await fs.promises.readFile(configPath, 'utf8');
+      try {
+        const config = JSON.parse(content);
+        const value = config[service];
+        // 确保返回的是字符串
+        return typeof value === 'string' ? value : '';
+      } catch (parseError) {
+        console.warn('配置文件 JSON 解析失败:', parseError.message);
+        return '';
+      }
     }
   } catch (e) {
     console.error('读取配置失败:', e);

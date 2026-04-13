@@ -5,11 +5,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 文件操作
   selectPDF: () => ipcRenderer.invoke('select-pdf'),
   selectFolder: () => ipcRenderer.invoke('select-folder'),
+  loadFolder: (path) => ipcRenderer.invoke('load-folder', path),
   readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
 
   // API Key 管理
   saveAPIKey: (service, apiKey) => ipcRenderer.invoke('save-api-key', service, apiKey),
   loadAPIKey: (service) => ipcRenderer.invoke('load-api-key', service),
+  saveConfig: (configData) => ipcRenderer.invoke('save-config', configData),
 
   // 应用信息
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
