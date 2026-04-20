@@ -19,7 +19,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       enableRemoteModule: false,
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, 'preload.cjs')
     }
   });
 
@@ -317,7 +317,8 @@ ipcMain.handle('build-knowledge-index', async (_, { files, indexEntries, basePat
         hash: hash,
         name: entry.name,
         type: entry.type,
-        summary: entry.summary || ''
+        summary: entry.summary || '',
+        keywords: entry.keywords || []
       };
       // 相同 hash 的文件会被覆盖
       indexMap.set(hash, indexItem);
@@ -396,6 +397,93 @@ ipcMain.handle('open-index-dir', async (_, folderPath) => {
     await shell.openPath(folderPath);
     return { success: true };
   } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// 获取对话历史目录路径
+function getChatHistoryDir() {
+  return path.join(app.getPath('userData'), 'chat-histories');
+}
+
+// 确保对话历史目录存在
+function ensureChatHistoryDir() {
+  const dir = getChatHistoryDir();
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  return dir;
+}
+
+// 根据文件路径生成对话历史文件名
+function getChatHistoryFileName(filePath) {
+  // 使用文件路径的哈希值作为文件名，避免文件名中的特殊字符问题
+  const hash = crypto.createHash('md5').update(filePath).digest('hex');
+  return `${hash}.json`;
+}
+
+// 保存对话历史
+ipcMain.handle('save-chat-history', async (_, { filePath, history }) => {
+  try {
+    if (!filePath || !history) {
+      return { success: false, error: '缺少文件路径或历史记录' };
+    }
+
+    ensureChatHistoryDir();
+    const chatHistoryFile = path.join(getChatHistoryDir(), getChatHistoryFileName(filePath));
+
+    await fs.promises.writeFile(
+      chatHistoryFile,
+      JSON.stringify({ filePath, history }, null, 2),
+      'utf8'
+    );
+
+    return { success: true };
+  } catch (error) {
+    console.error('保存对话历史失败:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// 加载对话历史
+ipcMain.handle('load-chat-history', async (_, filePath) => {
+  try {
+    if (!filePath) {
+      return { success: false, error: '缺少文件路径' };
+    }
+
+    const chatHistoryFile = path.join(getChatHistoryDir(), getChatHistoryFileName(filePath));
+
+    if (!fs.existsSync(chatHistoryFile)) {
+      return { success: true, history: [] };
+    }
+
+    const content = await fs.promises.readFile(chatHistoryFile, 'utf8');
+    const data = JSON.parse(content);
+
+    return { success: true, history: data.history || [] };
+  } catch (error) {
+    console.error('加载对话历史失败:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+// 删除对话历史
+ipcMain.handle('delete-chat-history', async (_, filePath) => {
+  try {
+    if (!filePath) {
+      return { success: false, error: '缺少文件路径' };
+    }
+
+    const chatHistoryFile = path.join(getChatHistoryDir(), getChatHistoryFileName(filePath));
+
+    if (fs.existsSync(chatHistoryFile)) {
+      await fs.promises.unlink(chatHistoryFile);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('删除对话历史失败:', error);
     return { success: false, error: error.message };
   }
 });

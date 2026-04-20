@@ -25,6 +25,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getIndexPath: (folderPath) => ipcRenderer.invoke('get-index-path', folderPath),
   openIndexDir: (folderPath) => ipcRenderer.invoke('open-index-dir', folderPath),
 
+  // 对话历史管理
+  saveChatHistory: (filePath, history) => ipcRenderer.invoke('save-chat-history', { filePath, history }),
+  loadChatHistory: (filePath) => ipcRenderer.invoke('load-chat-history', filePath),
+  deleteChatHistory: (filePath) => ipcRenderer.invoke('delete-chat-history', filePath),
+
   // 平台信息
   platform: process.platform
 });

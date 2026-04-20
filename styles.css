@@ -1,0 +1,569 @@
+* { box-sizing: border-box; }
+body { margin: 0; overflow: hidden; }
+
+#pdf-container {
+    overflow-y: auto;
+    background: #f3f4f6;
+}
+
+.pdf-page {
+    margin: 20px auto;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    background: white;
+}
+
+#chat-messages {
+    overflow-y: auto;
+}
+
+.message {
+    max-width: 85%;
+    word-wrap: break-word;
+}
+
+.user-message {
+    background: #3b82f6;
+    color: white;
+    margin-left: auto;
+}
+
+.ai-message {
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.loading-dots {
+    display: inline-flex;
+    gap: 4px;
+}
+
+.loading-dots span {
+    width: 6px;
+    height: 6px;
+    background: currentColor;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out;
+}
+
+.loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+.loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}
+
+#drop-zone {
+    transition: all 0.2s;
+}
+
+#drop-zone.dragover {
+    background: #dbeafe;
+    border-color: #3b82f6;
+}
+
+/* Markdown 样式 */
+.markdown-content {
+    line-height: 1.6;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+}
+
+.markdown-content h1 { font-size: 1.25em; }
+.markdown-content h2 { font-size: 1.1em; }
+.markdown-content h3 { font-size: 1.05em; }
+
+.markdown-content p {
+    margin: 0.5em 0;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+}
+
+.markdown-content li {
+    margin: 0.25em 0;
+}
+
+.markdown-content code {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.markdown-content pre {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 1em;
+    border-radius: 0.5em;
+    overflow-x: auto;
+    margin: 0.5em 0;
+}
+
+.markdown-content pre code {
+    background: none;
+    padding: 0;
+}
+
+.markdown-content blockquote {
+    border-left: 3px solid #3b82f6;
+    padding-left: 1em;
+    margin: 0.5em 0;
+    opacity: 0.8;
+}
+
+.markdown-content a {
+    color: #3b82f6;
+    text-decoration: underline;
+}
+
+.markdown-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5em 0;
+}
+
+.markdown-content th,
+.markdown-content td {
+    border: 1px solid #e5e7eb;
+    padding: 0.5em;
+    text-align: left;
+}
+
+.markdown-content th {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+/* 选中文本提问悬浮按钮 */
+#ask-selection {
+    position: fixed;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform-origin: center;
+    animation: fadeIn 0.2s ease-out;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+#ask-selection:hover {
+    transform: scale(1.05);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* PDF 页面容器 */
+.pdf-page-wrapper {
+    position: relative;
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+}
+
+/* PDF.js 文本层样式 */
+.textLayer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    line-height: 1;
+}
+
+.textLayer > span, .textLayer > div {
+    color: transparent;
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0% 0%;
+    font-size: 1em;
+    line-height: 1;
+    margin: 0;
+    padding: 0;
+    border: none;
+    pointer-events: auto;
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+}
+
+.textLayer ::selection, .textLayer ::-moz-selection {
+    background: rgba(59, 130, 246, 0.4) !important;
+    color: transparent !important;
+}
+
+.textLayer ::-webkit-selection {
+    background: rgba(59, 130, 246, 0.4) !important;
+    color: transparent !important;
+}
+
+.textLayer .highlight {
+    margin: 0;
+    padding: 0;
+    border: 1px solid rgba(59, 130, 246, 0.8);
+    background-color: rgba(59, 130, 246, 0.25);
+    pointer-events: none;
+    mix-blend-mode: multiply;
+}
+
+.textLayer .highlight.begin {
+    border-radius: 2px 0 0 2px;
+}
+
+.textLayer .highlight.end {
+    border-radius: 0 2px 2px 0;
+}
+
+.textLayer .highlight.selected {
+    background-color: rgba(59, 130, 246, 0.4);
+    border-color: rgba(59, 130, 246, 0.9);
+}
+
+/* 文件树样式 */
+.file-tree {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.file-tree-item {
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.file-tree-item:hover {
+    background-color: #f3f4f6;
+}
+
+.file-tree-item.selected {
+    background-color: #dbeafe;
+}
+
+.file-tree-folder {
+    position: relative;
+}
+
+.file-tree-folder > .file-tree-item-header {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+}
+
+.file-tree-folder > .file-tree-children {
+    margin-left: 20px;
+    display: none;
+}
+
+.file-tree-folder.expanded > .file-tree-children {
+    display: block;
+}
+
+.file-tree-file {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px 6px 28px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-tree-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
+.folder-icon {
+    color: #f59e0b;
+}
+
+.pdf-icon {
+    color: #ef4444;
+}
+
+.docx-icon {
+    color: #3b82f6;
+}
+
+.md-icon {
+    color: #10b981;
+}
+
+.txt-icon {
+    color: #6b7280;
+}
+
+.empty-files {
+    text-align: center;
+    padding: 40px 20px;
+    color: #9ca3af;
+}
+
+/* Markdown 渲染区样式 */
+.markdown-render {
+    padding: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+    line-height: 1.8;
+}
+
+.markdown-render h1 {
+    font-size: 2em;
+    font-weight: 700;
+    margin: 0.67em 0;
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid #eaecef;
+}
+
+.markdown-render h2 {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin: 0.83em 0;
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid #eaecef;
+}
+
+.markdown-render h3 {
+    font-size: 1.25em;
+    font-weight: 600;
+    margin: 1em 0;
+}
+
+.markdown-render p {
+    margin: 1em 0;
+}
+
+.markdown-render code {
+    background: #f6f8fa;
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.markdown-render pre {
+    background: #f6f8fa;
+    padding: 16px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 1em 0;
+}
+
+.markdown-render pre code {
+    background: none;
+    padding: 0;
+}
+
+.markdown-render blockquote {
+    border-left: 4px solid #dfe2e5;
+    padding: 0 1em;
+    color: #6a737d;
+    margin: 1em 0;
+}
+
+.markdown-render ul, .markdown-render ol {
+    padding-left: 2em;
+    margin: 1em 0;
+}
+
+.markdown-render li {
+    margin: 0.25em 0;
+}
+
+.markdown-render a {
+    color: #0366d6;
+    text-decoration: none;
+}
+
+.markdown-render a:hover {
+    text-decoration: underline;
+}
+
+.markdown-render table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+}
+
+.markdown-render th, .markdown-render td {
+    border: 1px solid #dfe2e5;
+    padding: 8px 12px;
+}
+
+.markdown-render th {
+    background: #f6f8fa;
+    font-weight: 600;
+}
+
+/* 文档内容显示区 */
+#doc-content {
+    overflow-y: auto;
+    background: #fff;
+}
+
+.docx-render {
+    padding: 40px;
+    max-width: 900px;
+    margin: 0 auto;
+    line-height: 1.8;
+}
+
+.docx-render h1 {
+    font-size: 2em;
+    font-weight: 700;
+    margin: 0.67em 0;
+}
+
+.docx-render h2 {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin: 0.83em 0;
+}
+
+.docx-render h3 {
+    font-size: 1.25em;
+    font-weight: 600;
+    margin: 1em 0;
+}
+
+.docx-render p {
+    margin: 1em 0;
+}
+
+.docx-render ul, .docx-render ol {
+    padding-left: 2em;
+    margin: 1em 0;
+}
+
+.docx-render li {
+    margin: 0.25em 0;
+}
+
+.docx-render table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+}
+
+.docx-render th, .docx-render td {
+    border: 1px solid #dfe2e5;
+    padding: 8px 12px;
+}
+
+.docx-render th {
+    background: #f6f8fa;
+    font-weight: 600;
+}
+
+/* 旋转动画 */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* 设置弹窗样式 */
+#settings-modal {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.settings-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    transition: all 0.15s;
+    background: white;
+}
+
+.settings-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.settings-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* Toast 样式 */
+#toast-container {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 1.7s forwards;
+    max-width: 300px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.toast.success {
+    background: rgba(16, 185, 129, 0.9);
+}
+
+.toast.error {
+    background: rgba(239, 68, 68, 0.9);
+}
+
+.toast.warning {
+    background: rgba(245, 158, 11, 0.9);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}

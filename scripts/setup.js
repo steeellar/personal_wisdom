@@ -5,10 +5,14 @@
  * 支持 Windows 和 macOS
  */
 
-const { spawn } = require('child_process');
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
+import { spawn, execSync } from 'child_process';
+import path from 'path';
+import fs from 'fs';
+import os from 'os';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PROJECT_ROOT = path.join(__dirname, '..');
 
@@ -76,7 +80,6 @@ function checkNodeVersion() {
 // 检查 npm
 function checkNpm() {
   try {
-    const { execSync } = require('child_process');
     const npmVersion = execSync('npm --version', { encoding: 'utf8' }).trim();
     log(`npm 版本: ${npmVersion}`, 'cyan');
     log('✅ npm 检查通过', 'green');
@@ -145,7 +148,7 @@ function showHelp() {
 async function main() {
   console.log('');
   log('╔══════════════════════════════════╗', 'cyan');
-  log('║     PDF 智能阅读kt器 - 设置脚本     ║', 'cyan');
+  log('║     PDF 智能阅读器 - 设置脚本     ║', 'cyan');
   log('╚══════════════════════════════════╝', 'cyan');
   console.log('');
 

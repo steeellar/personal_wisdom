@@ -1,8 +1,9 @@
 {
-  "name": "pdf-reader",
+  "name": "personal-knowledge-base",
   "version": "1.0.0",
-  "description": "基于 Electron 的跨平台 PDF 阅读器，支持 AI 智能问答功能",
-  "main": "main.js",
+  "description": "个人知识库 - 基于 Electron 的智能文档阅读器，支持 AI 智能问答功能",
+  "main": "main.cjs",
+  "type": "module",
   "author": "",
   "license": "MIT",
   "engines": {
@@ -24,8 +25,8 @@
     "pdfjs-dist": "^5.6.205"
   },
   "build": {
-    "appId": "com.pdfreader.app",
-    "productName": "PDF 智能阅读器",
+    "appId": "com.personalknowledgebase.app",
+    "productName": "个人知识库",
     "directories": {
       "output": "dist",
       "buildResources": "assets"
